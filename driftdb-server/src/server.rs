@@ -223,8 +223,13 @@ struct RoomResult {
 
 impl RoomResult {
     fn new(room: String, hostname: &str) -> Self {
-        let socket_url = format!("ws://{}/room/{}/connect", hostname, room);
-        let http_url = format!("http://{}/room/{}/send", hostname, room);
+        let effective_hostname = std::env::var("HOSTNAME_OVERRIDE").unwrap_or_else(|_| hostname.to_string());
+        let use_secure = std::env::var("USE_HTTPS_WSS").is_ok();
+        let ws_protocol = if use_secure { "wss" } else { "ws" };
+        let http_protocol = if use_secure { "https" } else { "http" };
+
+        let socket_url = format!("{}://{}/room/{}/connect", ws_protocol, effective_hostname, room);
+        let http_url = format!("{}://{}/room/{}/send", http_protocol, effective_hostname, room);
 
         Self {
             room,
